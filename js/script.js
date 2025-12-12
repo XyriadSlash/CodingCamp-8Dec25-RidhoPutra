@@ -1,53 +1,93 @@
-/// Initial empty array to hold todo items
-let todo = [];
+let todos = JSON.parse(localStorage.getItem("todos")) || [];
 
-function addTodo() {
-    const todoInput = document.getElementById("todo-input");
-    const todoDate = document.getElementById("todo-date");
+const taskInput = document.getElementById("taskInput");
+const dateInput = document.getElementById("dateInput");
+const todoList = document.getElementById("todoList");
 
-    /// Validation to ensure both fields are filled
-    if (todoInput.value === "" || todoDate.value === "") {
-        alert("Please fill in both the todo item and the date.");
-    } else {
-        const todoObj = {
-            task: todoInput.value,
-            date: todoDate.value
-        }
-
-        todo.push(todoObj);
-
-        renderTodos();
-
-        /// Clear input fields after adding
-        todoInput.value = "";
-        todoDate.value = "";
-    }
-}
-
-/// Function to reset the todo list
-function resetTodos() {
-    todo = [];
-
-    /// Re-render the empty list
-    renderTodos();
-}
-
-/// Function to render todo items to the DOM
 function renderTodos() {
-    const todoList = document.getElementById('todo-list');
+    todoList.innerHTML = "";
 
-    // Clear existing list
-    todoList.innerHTML = '';
+    if (todos.length === 0) {
+        todoList.innerHTML = `<div class="empty-text">No task found</div>`;
+        return;
+    }
 
-    // Render each todo item
-    todo.forEach((todo, _) => {
+    todos.forEach((todo, index) => {
         todoList.innerHTML += `
-        <li>
-            <p class="text-2xl">${todo.task} <span class="text-sm text-gray-500">(${todo.date})</span></p>
-            <hr />
-        </li>`;
+            <div class="todo-item">
+                <div>${todo.task}</div>
+                <div>${todo.date}</div>
+                <div>${todo.completed ? "Completed" : "Pending"}</div>
+                <div>
+                    <button class="action-btn action-edit" onclick="toggleStatus(${index})">Status</button>
+                    <button class="action-btn action-delete" onclick="deleteTodo(${index})">Delete</button>
+                </div>
+            </div>
+        `;
     });
 }
 
-/// Placeholder for future filter functionality
-function filterTodos() { }
+
+function addTodo() {
+    let task = taskInput.value.trim();
+    let date = dateInput.value;
+
+    if (!task || !date) {
+        alert("Isi task dan tanggal terlebih dahulu!");
+        return;
+    }
+
+    todos.push({
+        task: task,
+        date: date,
+        completed: false
+    });
+
+    saveTodos();
+    renderTodos();
+
+    taskInput.value = "";
+    dateInput.value = "";
+}
+
+
+function deleteTodo(index) {
+    todos.splice(index, 1);
+    saveTodos();
+    renderTodos();
+}
+
+
+function clearTodos() {
+    if (confirm("Hapus semua tugas?")) {
+        todos = [];
+        saveTodos();
+        renderTodos();
+    }
+}
+
+
+function toggleStatus(index) {
+    todos[index].completed = !todos[index].completed;
+    saveTodos();
+    renderTodos();
+}
+
+
+function filterTodos() {
+    todos.sort((a, b) => new Date(a.date) - new Date(b.date));
+    saveTodos();
+    renderTodos();
+}
+
+
+function saveTodos() {
+    localStorage.setItem("todos", JSON.stringify(todos));
+}
+
+
+document.getElementById("addBtn").addEventListener("click", addTodo);
+document.getElementById("clearBtn").addEventListener("click", clearTodos);
+document.getElementById("filterBtn").addEventListener("click", filterTodos);
+
+renderTodos();
